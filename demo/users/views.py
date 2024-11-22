@@ -9,7 +9,7 @@ from .models import UserModel
 import jwt
 from django.conf import settings
 from functools import wraps
-from .models import TokenModel
+from .models import TokenModel, OTPModel
 
 ##old method
 # def token_required(f):
@@ -216,21 +216,115 @@ def login(request):
         return JsonResponse({'error': 'Server error'}, status=500)
 
 # Example of a protected route that requires authentication
+# @token_required
+# def user_profile(request):
+#     try:
+#         user = UserModel.get_user_by_id(ObjectId(request.user_id))
+#         if not user:
+#             return JsonResponse({'error': 'User not found'}, status=404)
+            
+#         return JsonResponse({
+#             'id': str(user['_id']),
+#             'email': user['email'],
+#             'username': user['username']
+#         })
+#     except Exception as e:
+#         return JsonResponse({'error': 'Server error'}, status=500)
+
+# views.py additions
+@csrf_exempt
+def send_signup_otp(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+        role = data.get('role', 'buyer')
+        
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+        
+        # Generate and send OTP
+        otp = OTPModel.generate_otp(email)
+        OTPModel.send_otp_email(email, otp)
+        
+        return JsonResponse({
+            'message': 'OTP sent successfully',
+            'email': email
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def verify_signup_otp(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+        otp = data.get('otp')
+        password = data.get('password')
+        username = data.get('username')
+        role = data.get('role', 'buyer')
+        
+        # Verify OTP
+        OTPModel.verify_otp(email, otp)
+        
+        # Create user with verified status
+        user_id = UserModel.create_user(email, password, username, role)
+        
+        # Generate tokens
+        access_token, refresh_token = TokenModel.create_tokens(user_id)
+        
+        return JsonResponse({
+            'message': 'Signup successful',
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'user': {
+                'id': user_id,
+                'email': email,
+                'username': username,
+                'role': role
+            }
+        })
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'Signup failed'}, status=500)
+
+# Modify user_profile to show role-specific content
 @token_required
 def user_profile(request):
     try:
         user = UserModel.get_user_by_id(ObjectId(request.user_id))
         if not user:
             return JsonResponse({'error': 'User not found'}, status=404)
-            
-        return JsonResponse({
-            'id': str(user['_id']),
-            'email': user['email'],
-            'username': user['username']
-        })
+        
+        # Role-specific profile data
+        if user['role'] == 'buyer':
+            profile_data = {
+                'id': str(user['_id']),
+                'email': user['email'],
+                'username': user['username'],
+                'role': user['role'],
+                'purchase_history': [],  # Placeholder for buyer-specific data
+                'preferences': {}
+            }
+        elif user['role'] == 'seller':
+            profile_data = {
+                'id': str(user['_id']),
+                'email': user['email'],
+                'username': user['username'],
+                'role': user['role'],
+                'products': [],  # Placeholder for seller-specific data
+                'sales_stats': {}
+            }
+        
+        return JsonResponse(profile_data)
     except Exception as e:
         return JsonResponse({'error': 'Server error'}, status=500)
-
 @csrf_exempt
 def logout(request):
     if request.method != 'POST':
@@ -239,7 +333,7 @@ def logout(request):
     try:
         # Get the access and refresh tokens from the request
         access_token = request.headers.get('Authorization', '').split(' ')[1]
-        refresh_token = json.loads(request.body).get('refresh_token')
+        # refresh_token = json.loads(request.body).get('refresh_token')
         
         # Decode tokens to get user_id
         access_data = jwt.decode(access_token, settings.SECRET_KEY, algorithms=['HS256'])

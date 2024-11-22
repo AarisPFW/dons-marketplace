@@ -27,6 +27,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Email Configuration (Gmail SMTP Example)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'bunnyfeb10@gmail.com'
+EMAIL_HOST_PASSWORD = 'clzsdkvwsdtrhilz'  # Use App Password, not account password
+DEFAULT_FROM_EMAIL = 'bunnyfeb10@gmail.com'
 
 # Application definition
 
@@ -37,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -47,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = "demo.urls"
@@ -69,6 +79,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "demo.wsgi.application"
 
+# Allow all origins in development (restrict in production)
+CORS_ALLOW_ALL_ORIGINS = True
+# Or specify specific origins
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "https://your-frontend-domain.com"
+# ]
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -134,3 +151,4 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+

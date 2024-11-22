@@ -8,28 +8,109 @@ import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
 import secrets
+import random
+from django.core.mail import send_mail
 
 # client = MongoClient('mongodb://localhost:27017/')
 client = MongoClient("localhost:27017")
 db = client['demodatabase']
 
+class OTPModel:
+    otp_collection = db['otp_collection']
+    
+    @staticmethod
+    def generate_otp(email):
+        # Generate a 6-digit OTP
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        # Store OTP with expiration (15 minutes)
+        otp_data = {
+            'email': email,
+            'otp': otp,
+            'created_at': datetime.utcnow(),
+            'expires_at': datetime.utcnow() + timedelta(minutes=15)
+        }
+        
+        # Remove any existing OTPs for this email
+        OTPModel.otp_collection.delete_many({'email': email})
+        
+        # Insert new OTP
+        OTPModel.otp_collection.insert_one(otp_data)
+        
+        return otp
+    
+    @staticmethod
+    def send_otp_email(email, otp):
+        subject = 'Your Signup OTP'
+        message = f'Your OTP is: {otp}. It will expire in 15 minutes.'
+        send_mail(
+            subject, 
+            message, 
+            settings.DEFAULT_FROM_EMAIL, 
+            [email], 
+            fail_silently=False
+        )
+    
+    @staticmethod
+    def verify_otp(email, user_otp):
+        # Find the most recent OTP for this email
+        stored_otp = OTPModel.otp_collection.find_one({
+            'email': email,
+            'expires_at': {'$gt': datetime.utcnow()}
+        })
+        
+        if not stored_otp:
+            raise ValueError("OTP expired or not found")
+        
+        if stored_otp['otp'] != user_otp:
+            raise ValueError("Invalid OTP")
+        
+        # Remove the OTP after successful verification
+        OTPModel.otp_collection.delete_one({'_id': stored_otp['_id']})
+        return True
+    
+# Update UserModel to include roles
 class UserModel:
     collection = db['democollection']
     
     @staticmethod
-    def create_user(email, password, username):
+    def create_user(email, password, username, role='buyer'):
         # Check if user exists
         if UserModel.collection.find_one({"email": email}):
             raise ValueError("User already exists")
-            
+        
+        # Validate role
+        if role not in ['buyer', 'seller']:
+            raise ValueError("Invalid role. Must be 'buyer' or 'seller'")
+        
         user_data = {
             "email": email,
             "password": password,  # In production, hash this password
             "username": username,
+            "role": role,
+            "is_verified": False,
             "created_at": datetime.utcnow()
         }
         result = UserModel.collection.insert_one(user_data)
         return str(result.inserted_id)
+    
+# class UserModel:
+#     collection = db['democollection']
+    
+#     @staticmethod
+#     def create_user(email, password, username):
+#         # Check if user exists
+#         if UserModel.collection.find_one({"email": email}):
+#             raise ValueError("User already exists")
+            
+#         user_data = {
+#             "email": email,
+#             "password": password,  # In production, hash this password
+#             "username": username,
+#             "created_at": datetime.utcnow()
+#         }
+#         result = UserModel.collection.insert_one(user_data)
+#         return str(result.inserted_id)
     
     @staticmethod
     def get_user_by_email(email):
