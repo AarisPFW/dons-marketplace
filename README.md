@@ -41,3 +41,53 @@ FS
 npm start
 npm run dev
 node server.js
+------------
+## --for prod 
+# -- password hashing
+from django.contrib.auth.hashers import make_password, check_password
+
+# In UserModel.create_user:
+password = make_password(password)
+
+# In login view:
+if not check_password(password, user['password']):
+    return JsonResponse({'error': 'Invalid credentials'}, status=401)
+# --input validation
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
+def validate_user_data(email, password, username=None):
+    try:
+        validate_email(email)
+    except ValidationError:
+        raise ValueError("Invalid email format")
+        
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters")
+        
+    if username and len(username) < 3:
+        raise ValueError("Username must be at least 3 characters")
+# --------
+# Add token blacklisting for logout:
+# Add to models.py
+class TokenBlacklist:
+    collection = db['token_blacklist']
+    
+    @staticmethod
+    def blacklist_token(token):
+        TokenBlacklist.collection.insert_one({
+            "token": token,
+            "created_at": datetime.utcnow()
+        })
+    
+    @staticmethod
+    def is_blacklisted(token):
+        return bool(TokenBlacklist.collection.find_one({"token": token}))
+
+# Add to views.py
+@csrf_exempt
+@token_required
+def logout(request):
+    token = request.headers.get('Authorization').split(' ')[1]
+    TokenBlacklist.blacklist_token(token)
+    return JsonResponse({'message': 'Logged out successfully'})

@@ -145,6 +145,7 @@ def refresh_token(request):
 #     })
 
 # views.py
+# views.py
 @csrf_exempt
 def signup(request):
     if request.method != 'POST':
@@ -155,26 +156,23 @@ def signup(request):
         email = data.get('email')
         password = data.get('password')  # Remember to hash in production
         username = data.get('username')
+        role = data.get('role', 'buyer')
         
         # Basic validation
         if not all([email, password, username]):
             return JsonResponse({'error': 'All fields are required'}, status=400)
         
-        # Create user
-        user_id = UserModel.create_user(email, password, username)
+        # Create unverified user
+        user_id = UserModel.create_unverified_user(email, password, username, role)
         
-        # Generate both tokens
-        access_token, refresh_token = TokenModel.create_tokens(user_id)
+        # Generate and send OTP
+        otp = OTPModel.generate_otp(email)
+        OTPModel.send_otp_email(email, otp)
         
         return JsonResponse({
-            'message': 'User created successfully',
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'user': {
-                'id': str(user_id),
-                'email': email,
-                'username': username
-            }
+            'message': 'User registered successfully. Please verify your email with the OTP sent.',
+            'user_id': str(user_id),
+            'email': email
         })
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -196,7 +194,13 @@ def login(request):
         
         user = UserModel.get_user_by_email(email)
         
-        if not user or user['password'] != password:  # In production, verify hashed password
+        if not user:
+            return JsonResponse({'error': 'User not found'}, status=401)
+            
+        if not user.get('is_verified', False):
+            return JsonResponse({'error': 'Please verify your email first'}, status=401)
+            
+        if user['password'] != password:  # In production, verify hashed password
             return JsonResponse({'error': 'Invalid credentials'}, status=401)
         
         # Generate both tokens
@@ -209,7 +213,8 @@ def login(request):
             'user': {
                 'id': str(user['_id']),
                 'email': user['email'],
-                'username': user['username']
+                'username': user['username'],
+                'role': user['role']
             }
         })
     except Exception as e:
@@ -265,36 +270,38 @@ def verify_signup_otp(request):
         data = json.loads(request.body)
         email = data.get('email')
         otp = data.get('otp')
-        password = data.get('password')
-        username = data.get('username')
-        role = data.get('role', 'buyer')
+        
+        if not all([email, otp]):
+            return JsonResponse({'error': 'Email and OTP are required'}, status=400)
         
         # Verify OTP
         OTPModel.verify_otp(email, otp)
         
-        # Create user with verified status
-        user_id = UserModel.create_user(email, password, username, role)
+        # Mark user as verified
+        user = UserModel.verify_user(email)
         
         # Generate tokens
-        access_token, refresh_token = TokenModel.create_tokens(user_id)
+        access_token, refresh_token = TokenModel.create_tokens(str(user['_id']))
         
         return JsonResponse({
-            'message': 'Signup successful',
+            'message': 'Email verified successfully',
             'access_token': access_token,
             'refresh_token': refresh_token,
             'user': {
-                'id': user_id,
-                'email': email,
-                'username': username,
-                'role': role
+                'id': str(user['_id']),
+                'email': user['email'],
+                'username': user['username'],
+                'role': user['role']
             }
         })
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': 'Signup failed'}, status=500)
+        print(f"Error during verification: {str(e)}")  # For debugging
+        return JsonResponse({'error': 'Verification failed'}, status=500)
 
 # Modify user_profile to show role-specific content
+@csrf_exempt
 @token_required
 def user_profile(request):
     try:

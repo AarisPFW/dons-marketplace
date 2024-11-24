@@ -94,6 +94,60 @@ class UserModel:
         result = UserModel.collection.insert_one(user_data)
         return str(result.inserted_id)
     
+    @staticmethod
+    def create_unverified_user(email, password, username, role='buyer'):
+        """Create a new user with unverified status"""
+        # Check if user exists and is verified
+        existing_user = UserModel.collection.find_one({"email": email})
+        if existing_user and existing_user.get('is_verified', False):
+            raise ValueError("User already exists")
+            
+        # If user exists but is unverified, update their details
+        if existing_user:
+            UserModel.collection.update_one(
+                {"email": email},
+                {
+                    "$set": {
+                        "password": password,
+                        "username": username,
+                        "role": role,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            return str(existing_user['_id'])
+            
+        # Create new unverified user
+        user_data = {
+            "email": email,
+            "password": password,  # Remember to hash in production
+            "username": username,
+            "role": role,
+            "is_verified": False,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        result = UserModel.collection.insert_one(user_data)
+        return str(result.inserted_id)
+    
+    @staticmethod
+    def verify_user(email):
+        """Mark user as verified after OTP verification"""
+        result = UserModel.collection.update_one(
+            {"email": email},
+            {
+                "$set": {
+                    "is_verified": True,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        if result.modified_count == 0:
+            raise ValueError("User not found")
+        
+        # Return the updated user
+        return UserModel.collection.find_one({"email": email})
+    
 # class UserModel:
 #     collection = db['democollection']
     
