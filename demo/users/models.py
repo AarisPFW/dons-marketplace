@@ -11,9 +11,32 @@ import secrets
 import random
 from django.core.mail import send_mail
 
-# client = MongoClient('mongodb://localhost:27017/')
-client = MongoClient("localhost:27017")
-db = client['demodatabase']
+# # client = MongoClient('mongodb://localhost:27017/')
+# client = MongoClient("localhost:27017")
+# db = client['demodatabase']
+
+# MongoDB Atlas connection string
+# Replace with your actual connection string from MongoDB Atlas
+MONGO_URI = "mongodb+srv://rahulalladi004:IWrksufcObrcwj1m@test-cluster.tyedv.mongodb.net/?retryWrites=true&w=majority&appName=Test-cluster"
+
+try:
+    # Connect with retry mechanism
+    client = MongoClient(MONGO_URI, 
+                        serverSelectionTimeoutMS=5000,  # 5 second timeout
+                        connectTimeoutMS=10000,         # 10 second timeout
+                        socketTimeoutMS=45000,          # 45 second timeout
+                        maxPoolSize=50)                 # Maximum connection pool size
+    
+    # Test the connection
+    client.admin.command('ping')
+    print("Successfully connected to MongoDB Atlas!")
+    
+except Exception as e:
+    print(f"Error connecting to MongoDB Atlas: {e}")
+    raise
+
+# Initialize database
+db = client['demodatabase']  # Replace with your actual database name
 
 class OTPModel:
     otp_collection = db['otp_collection']
