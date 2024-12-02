@@ -1,33 +1,36 @@
+// src/theme/index.js
 import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#ceb991', // PFW Gold
-      dark: '#b9a47d',
-      contrastText: '#000',
+      main: '#000000', // PFW Black
+      light: '#212121',
+      dark: '#000000',
     },
     secondary: {
-      main: '#000000', // Black
-      contrastText: '#fff',
+      main: '#CFB991', // PFW Gold
+      light: '#D4C4A6',
+      dark: '#BFA76F',
+    },
+    accent: {
+      blue: '#0066B3', // PFW Blue
+      white: '#FFFFFF',
     },
   },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          fontWeight: 600,
-        },
-      },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontSize: '2.5rem',
+      fontWeight: 700,
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
+    h2: {
+      fontSize: '2rem',
+      fontWeight: 700,
+    },
+    h3: {
+      fontSize: '1.25rem',
+      fontWeight: 600,
     },
   },
 });
