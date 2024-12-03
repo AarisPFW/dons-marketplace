@@ -13,6 +13,7 @@ import SellerSignUp from './pages/Auth/SellerSignUp';
 import OTPVerification from './pages/Auth/OTPVerification';
 import StudentDashboard from './pages/Student/Dashboard';
 import SellerDashboard from './pages/Seller/Dashboard';
+import Profile from './pages/Student/StudentProfile';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="signin" element={<StudentSignIn />} />
             <Route path="signup" element={<StudentSignUp />} />
             <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* Seller Routes */}
