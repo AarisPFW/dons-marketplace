@@ -1,4 +1,4 @@
-// src/pages/Student/Profile.jsx
+// src/pages/Seller/Profile.jsx
 import React from 'react';
 import { 
   Box, 
@@ -11,16 +11,16 @@ import {
 import Navbar from '../../../components/common/Navbar';
 import { UserCircle } from 'lucide-react';
 
-const StudentProfile = () => {
+const SellerProfile = () => {
   // This would come from your auth context/state management in a real app
   const userDetails = {
-    name: "John Doe",
-    email: "john.doe@pfw.edu"
+    name: "Jane Doe",
+    email: "jane.doe@example.com"
   };
 
   return (
     <Box>
-      <Navbar userType="student" />
+      <Navbar />
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper 
           elevation={3} 
@@ -43,7 +43,7 @@ const StudentProfile = () => {
           </Avatar>
 
           <Typography variant="h4" gutterBottom>
-            Student Profile
+            Seller Profile
           </Typography>
           
           <Divider sx={{ width: '100%', my: 3 }} />
@@ -74,4 +74,4 @@ const StudentProfile = () => {
   );
 };
 
-export default StudentProfile;
+export default SellerProfile;

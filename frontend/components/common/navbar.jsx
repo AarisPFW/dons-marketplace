@@ -13,7 +13,7 @@ import {
 import { User, UserCircle, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({userType = 'student'}) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -28,7 +28,7 @@ const Navbar = () => {
 
   const handleProfile = () => {
     handleClose();
-    navigate('/student/profile');
+    navigate(`/${userType}/profile`);
   };
 
   const handleLogout = () => {

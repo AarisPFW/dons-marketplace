@@ -1,7 +1,7 @@
 // src/pages/Student/Dashboard.jsx
 import React, { useState } from 'react';
 import { Box, Container, Stack, Pagination } from '@mui/material';
-import Navbar from '../../../components/common/navbar';
+import Navbar from '../../../components/common/Navbar';
 import FilterSection from '../../../components/student/FilterSection';
 import ProductGrid from '../../../components/student/ProductGrid';
 import ProductDetailModal from '../../../components/student/ProductDetailModal';
@@ -244,7 +244,7 @@ const StudentDashboard = () => {
 
   return (
     <Box sx={{ overflowX: 'hidden' }}>
-      <Navbar />
+      <Navbar userType="student" />
       <Container 
         maxWidth="xl" 
         sx={{ 
