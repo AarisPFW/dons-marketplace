@@ -13,7 +13,8 @@ import SellerSignUp from './pages/Auth/SellerSignUp';
 import OTPVerification from './pages/Auth/OTPVerification';
 import StudentDashboard from './pages/Student/Dashboard';
 import SellerDashboard from './pages/Seller/Dashboard';
-import Profile from './pages/Student/StudentProfile';
+import StudentProfile from './pages/Student/StudentProfile';
+import SellerProfile from './pages/Seller/SellerProfile';
 
 function App() {
   return (
@@ -28,7 +29,7 @@ function App() {
             <Route path="signin" element={<StudentSignIn />} />
             <Route path="signup" element={<StudentSignUp />} />
             <Route path="dashboard" element={<StudentDashboard />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="profile" element={<StudentProfile />} />
           </Route>
 
           {/* Seller Routes */}
@@ -36,6 +37,7 @@ function App() {
             <Route path="signin" element={<SellerSignIn />} />
             <Route path="signup" element={<SellerSignUp />} />
             <Route path="dashboard" element={<SellerDashboard />} />
+            <Route path="profile" element={<SellerProfile />} />
           </Route>
 
           {/* Common Routes */}
