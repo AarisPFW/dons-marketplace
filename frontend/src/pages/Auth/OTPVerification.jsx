@@ -8,7 +8,7 @@ import {
   Alert 
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AuthCard from '../../../components/common/AuthCard';
+import AuthCard from '../../components/common/AuthCard';
 
 const OTPVerification = () => {
   const navigate = useNavigate();

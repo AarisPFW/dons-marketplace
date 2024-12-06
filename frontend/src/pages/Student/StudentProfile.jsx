@@ -8,7 +8,7 @@ import {
   Avatar,
   Divider
 } from '@mui/material';
-import Navbar from '../../../components/common/Navbar';
+import Navbar from '../../components/common/Navbar';
 import { UserCircle } from 'lucide-react';
 
 const StudentProfile = () => {
