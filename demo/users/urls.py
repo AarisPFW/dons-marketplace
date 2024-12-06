@@ -18,4 +18,11 @@ urlpatterns = [
     path('auth/refresh-token/', views.refresh_token, name='refresh_token'),
     path('auth/logout/', views.logout, name='logout'),
     path('profile/', views.user_profile, name='user_profile'),
+
+    # Product-related URLs
+    path('products/', views.get_products, name='get_products'),
+    path('products/create/', views.create_product, name='create_product'),
+    path('products/<str:product_id>/', views.get_product, name='get_product'),
+    path('products/<str:product_id>/update/', views.update_product, name='update_product'),
+    path('products/<str:product_id>/delete/', views.delete_product, name='delete_product'),
 ]

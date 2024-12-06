@@ -9,7 +9,7 @@ from .models import UserModel
 import jwt
 from django.conf import settings
 from functools import wraps
-from .models import TokenModel, OTPModel
+from .models import TokenModel, OTPModel, ProductModel
 
 ##old method
 # def token_required(f):
@@ -353,3 +353,164 @@ def logout(request):
     
     except Exception as e:
         return JsonResponse({'error': 'Logout failed'}, status=500)
+    
+@csrf_exempt
+@token_required
+def create_product(request):
+    """
+    Create a new product
+    Requires authentication
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get user details from token
+        user = UserModel.get_user_by_id(ObjectId(request.user_id))
+        
+        # Ensure user is a seller
+        if user.get('role') != 'seller':
+            return JsonResponse({'error': 'Only sellers can create products'}, status=403)
+        
+        # Parse request data
+        data = json.loads(request.body)
+        
+        # Add seller email from authenticated user
+        data['seller_email'] = user['email']
+        
+        # Create product
+        product_id = ProductModel.create_product(data)
+        
+        return JsonResponse({
+            'message': 'Product created successfully',
+            'product_id': product_id
+        }, status=201)
+    
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'Server error'}, status=500)
+
+@csrf_exempt
+def get_products(request):
+    """
+    Retrieve products with flexible filtering
+    No authentication required
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Extract query parameters
+        filters = {
+            key: request.GET.get(key) 
+            for key in ['seller_email', 'category', 'status', 'min_price', 'max_price'] 
+            if request.GET.get(key)
+        }
+        
+        # Retrieve products
+        products = ProductModel.get_products(filters)
+        
+        return JsonResponse({
+            'products': products,
+            'total_count': len(products)
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': 'Server error'}, status=500)
+
+@csrf_exempt
+def get_product(request, product_id):
+    """
+    Retrieve a specific product by ID
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Retrieve product
+        product = ProductModel.get_product_by_id(product_id)
+        
+        if not product:
+            return JsonResponse({'error': 'Product not found'}, status=404)
+        
+        return JsonResponse(product)
+    
+    except Exception as e:
+        return JsonResponse({'error': 'Server error'}, status=500)
+
+@csrf_exempt
+@token_required
+def update_product(request, product_id):
+    """
+    Update an existing product
+    Requires authentication and seller role
+    """
+    if request.method != 'PUT':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get user details
+        user = UserModel.get_user_by_id(ObjectId(request.user_id))
+        
+        # Get existing product
+        existing_product = ProductModel.get_product_by_id(product_id)
+        
+        # Verify seller ownership
+        if existing_product['seller_email'] != user['email']:
+            return JsonResponse({'error': 'Not authorized to update this product'}, status=403)
+        
+        # Parse update data
+        data = json.loads(request.body)
+        
+        # Update product
+        modified_count = ProductModel.update_product(product_id, data)
+        
+        if modified_count == 0:
+            return JsonResponse({'error': 'Product not found or no changes made'}, status=404)
+        
+        return JsonResponse({
+            'message': 'Product updated successfully',
+            'modified_count': modified_count
+        })
+    
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'Server error'}, status=500)
+
+@csrf_exempt
+@token_required
+def delete_product(request, product_id):
+    """
+    Delete a product
+    Requires authentication and seller role
+    """
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get user details
+        user = UserModel.get_user_by_id(ObjectId(request.user_id))
+        
+        # Get existing product
+        existing_product = ProductModel.get_product_by_id(product_id)
+        
+        # Verify seller ownership
+        if existing_product['seller_email'] != user['email']:
+            return JsonResponse({'error': 'Not authorized to delete this product'}, status=403)
+        
+        # Delete product
+        deleted_count = ProductModel.delete_product(product_id)
+        
+        if deleted_count == 0:
+            return JsonResponse({'error': 'Product not found'}, status=404)
+        
+        return JsonResponse({
+            'message': 'Product deleted successfully',
+            'deleted_count': deleted_count
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': 'Server error'}, status=500)
+    

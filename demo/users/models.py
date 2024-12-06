@@ -10,6 +10,7 @@ from django.conf import settings
 import secrets
 import random
 from django.core.mail import send_mail
+import base64
 
 # # client = MongoClient('mongodb://localhost:27017/')
 # client = MongoClient("localhost:27017")
@@ -278,3 +279,148 @@ class TokenModel:
         # Remove all tokens for a user (useful for logout)
         TokenModel.access_tokens.delete_many({'user_id': str(user_id)})
         TokenModel.refresh_tokens.delete_many({'user_id': str(user_id)})
+
+class ProductModel:
+    collection = db['products']
+    
+    @staticmethod
+    def create_product(data):
+        """
+        Create a new product
+        
+        :param data: Dictionary containing product details
+        :return: Inserted product ID
+        """
+        # Validate required fields
+        required_fields = ['title', 'price', 'category', 'description', 'seller_email']
+        for field in required_fields:
+            if field not in data:
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Process base64 image if provided
+        if 'image' in data and data['image']:
+            # Validate base64 image
+            try:
+                # Attempt to decode the base64 string
+                base64.b64decode(data['image'])
+            except Exception:
+                raise ValueError("Invalid base64 image")
+        
+        # Prepare product data
+        product_data = {
+            "title": data['title'],
+            "price": float(data['price']),
+            "category": data['category'],
+            "description": data['description'],
+            "image": data.get('image', ''),  # Base64 encoded image
+            "date_posted": datetime.utcnow(),
+            "status": data.get('status', 'Listed'),
+            "seller_email": data['seller_email'],
+            "seller_phone_number": data.get('seller_phone_number', '')
+        }
+        
+        # Insert product
+        result = ProductModel.collection.insert_one(product_data)
+        return str(result.inserted_id)
+    
+    @staticmethod
+    def get_products(filters=None):
+        """
+        Retrieve products with flexible filtering
+        
+        :param filters: Dictionary of filter parameters
+        :return: List of products
+        """
+        # Default empty filter
+        query = {}
+        
+        # Apply filters if provided
+        if filters:
+            # Handle seller email filter
+            if 'seller_email' in filters:
+                query['seller_email'] = filters['seller_email']
+            
+            # Handle category filter
+            if 'category' in filters:
+                query['category'] = filters['category']
+            
+            # Handle status filter
+            if 'status' in filters:
+                query['status'] = filters['status']
+            
+            # Handle price range filter
+            if 'min_price' in filters or 'max_price' in filters:
+                price_query = {}
+                if 'min_price' in filters:
+                    price_query['$gte'] = float(filters['min_price'])
+                if 'max_price' in filters:
+                    price_query['$lte'] = float(filters['max_price'])
+                query['price'] = price_query
+        
+        # Execute query
+        products = list(ProductModel.collection.find(query))
+        
+        # Convert ObjectId to string for JSON serialization
+        for product in products:
+            product['_id'] = str(product['_id'])
+            product['date_posted'] = product['date_posted'].isoformat()
+        
+        return products
+    
+    @staticmethod
+    def get_product_by_id(product_id):
+        """
+        Retrieve a specific product by ID
+        
+        :param product_id: Product ID
+        :return: Product details or None
+        """
+        try:
+            product = ProductModel.collection.find_one({"_id": ObjectId(product_id)})
+            if product:
+                product['_id'] = str(product['_id'])
+                product['date_posted'] = product['date_posted'].isoformat()
+            return product
+        except Exception:
+            return None
+    
+    @staticmethod
+    def update_product(product_id, update_data):
+        """
+        Update an existing product
+        
+        :param product_id: Product ID to update
+        :param update_data: Dictionary of fields to update
+        :return: Number of modified documents
+        """
+        # Remove _id if accidentally included
+        update_data.pop('_id', None)
+        
+        # Prepare update operations
+        update_ops = {"$set": update_data}
+        
+        # Process base64 image if provided
+        if 'image' in update_data and update_data['image']:
+            try:
+                base64.b64decode(update_data['image'])
+            except Exception:
+                raise ValueError("Invalid base64 image")
+        
+        # Update product
+        result = ProductModel.collection.update_one(
+            {"_id": ObjectId(product_id)}, 
+            update_ops
+        )
+        
+        return result.modified_count
+    
+    @staticmethod
+    def delete_product(product_id):
+        """
+        Delete a product
+        
+        :param product_id: Product ID to delete
+        :return: Number of deleted documents
+        """
+        result = ProductModel.collection.delete_one({"_id": ObjectId(product_id)})
+        return result.deleted_count
