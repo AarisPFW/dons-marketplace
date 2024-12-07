@@ -9,29 +9,50 @@ import {
   Alert 
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import AuthCard from '../../../components/common/AuthCard';
+import AuthCard from '../../components/common/AuthCard';
+import PhoneInput from '../../components/common/PhoneInput';
 
 const SellerSignUp = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
   const [error, setError] = useState('');
 
+  // US Phone number validation function
+  const isValidUSPhone = (phone) => {
+    const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    return phoneRegex.test(phone);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    setError('');
+
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
+    // Validate phone number
+    if (!isValidUSPhone(formData.phone)) {
+      setError('Please enter a valid US phone number');
+      return;
+    }
+
     // Proceed to OTP verification
-    navigate('/verify-otp', { state: { userType: 'seller', email: formData.email } });
+    navigate('/verify-otp', { 
+      state: { 
+        userType: 'seller', 
+        email: formData.email,
+        phone: formData.phone 
+      } 
+    });
   };
 
   return (
@@ -69,6 +90,16 @@ const SellerSignUp = () => {
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             sx={{ mb: 2 }}
             required
+          />
+          <PhoneInput
+            fullWidth
+            label="Phone Number"
+            variant="outlined"
+            value={formData.phone}
+            onChange={(value) => setFormData({ ...formData, phone: value })}
+            sx={{ mb: 2 }}
+            required
+            helperText="US phone number"
           />
           <TextField
             fullWidth

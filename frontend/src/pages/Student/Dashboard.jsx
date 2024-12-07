@@ -1,10 +1,10 @@
 // src/pages/Student/Dashboard.jsx
 import React, { useState } from 'react';
 import { Box, Container, Stack, Pagination } from '@mui/material';
-import Navbar from '../../../components/common/Navbar';
-import FilterSection from '../../../components/student/FilterSection';
-import ProductGrid from '../../../components/student/ProductGrid';
-import ProductDetailModal from '../../../components/student/ProductDetailModal';
+import Navbar from '../../components/common/Navbar';
+import FilterSection from '../../components/student/FilterSection';
+import ProductGrid from '../../components/student/ProductGrid';
+import ProductDetailModal from '../../components/student/ProductDetailModal';
 
 // Temporary Dummy data
 const DUMMY_PRODUCTS = [

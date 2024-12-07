@@ -7,10 +7,10 @@ import {
   Typography
 } from '@mui/material';
 import { Plus } from 'lucide-react';
-import Navbar from '../../../components/common/Navbar';
-import ProductTable from '../../../components/seller/ProductTable';
-import ProductDialog from '../../../components/seller/ProductDialog';
-import DeleteConfirmDialog from '../../../components/seller/DeleteConfirmDialog';
+import Navbar from '../../components/common/Navbar';
+import ProductTable from '../../components/seller/ProductTable';
+import ProductDialog from '../../components/seller/ProductDialog';
+import DeleteConfirmDialog from '../../components/seller/DeleteConfirmDialog';
 
 // Dummy data - replace with API call later
 const DUMMY_PRODUCTS = [

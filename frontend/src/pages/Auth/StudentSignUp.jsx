@@ -9,7 +9,7 @@ import {
   Alert 
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import AuthCard from '../../../components/common/AuthCard';
+import AuthCard from '../../components/common/AuthCard';
 
 const StudentSignUp = () => {
   const navigate = useNavigate();

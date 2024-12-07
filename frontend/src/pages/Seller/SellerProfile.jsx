@@ -8,19 +8,21 @@ import {
   Avatar,
   Divider
 } from '@mui/material';
-import Navbar from '../../../components/common/Navbar';
+import Navbar from '../../components/common/Navbar';
 import { UserCircle } from 'lucide-react';
 
+// src/pages/Seller/Profile.jsx
 const SellerProfile = () => {
   // This would come from your auth context/state management in a real app
   const userDetails = {
     name: "Jane Doe",
-    email: "jane.doe@example.com"
+    email: "jane.doe@example.com",
+    phone: "(123) 456-7890"
   };
 
   return (
     <Box>
-      <Navbar />
+      <Navbar userType="seller" />
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper 
           elevation={3} 
@@ -64,8 +66,20 @@ const SellerProfile = () => {
             >
               Email
             </Typography>
-            <Typography variant="h6">
+            <Typography variant="h6" gutterBottom>
               {userDetails.email}
+            </Typography>
+
+            <Typography 
+              variant="subtitle1" 
+              color="text.secondary" 
+              gutterBottom 
+              sx={{ mt: 2 }}
+            >
+              Phone Number
+            </Typography>
+            <Typography variant="h6">
+              {userDetails.phone}
             </Typography>
           </Box>
         </Paper>
