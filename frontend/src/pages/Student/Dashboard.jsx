@@ -1,4 +1,3 @@
-// src/pages/Student/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { Box, Container, Stack, Pagination } from '@mui/material';
 import Navbar from '../../components/common/Navbar';
@@ -24,7 +23,9 @@ const StudentDashboard = () => {
     const fetchProducts = async () => {
       try {
         const response = await axiosInstance.get('/users/products/');
-        setProducts(response.data.products);
+        // Filter out sold products immediately after fetching
+        const listedProducts = response.data.products.filter(product => product.status === 'listed');
+        setProducts(listedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -44,7 +45,7 @@ const StudentDashboard = () => {
       case "500+":
         return price > 500;
       default:
-        return true; // "all" or any other value
+        return true;
     }
   };
 

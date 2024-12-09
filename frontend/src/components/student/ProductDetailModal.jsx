@@ -1,4 +1,3 @@
-// src/components/student/ProductDetailModal.jsx
 import React from 'react';
 import {
   Dialog,
@@ -8,8 +7,7 @@ import {
   Box,
   Grid,
   Divider,
-  Link,
-  Chip
+  Link
 } from '@mui/material';
 import { X, Mail, Phone } from 'lucide-react';
 
@@ -81,16 +79,9 @@ const ProductDetailModal = ({ open, onClose, product }) => {
           {/* Details Section */}
           <Grid item xs={12} md={6}>
             <Box sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">
-                  {product.title}
-                </Typography>
-                <Chip 
-                  label={product.status} 
-                  color={product.status === 'Listed' ? 'info' : 'success'}
-                  size="small"
-                />
-              </Box>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                {product.title}
+              </Typography>
 
               <Typography variant="h4" color="primary" gutterBottom>
                 ${product.price.toFixed(2)}
