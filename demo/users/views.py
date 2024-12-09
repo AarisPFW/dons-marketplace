@@ -401,13 +401,14 @@ def get_products(request):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
+        print("1")
         # Extract query parameters
         filters = {
             key: request.GET.get(key) 
             for key in ['seller_email', 'category', 'status', 'min_price', 'max_price'] 
             if request.GET.get(key)
         }
-        
+        print("2")
         # Retrieve products
         products = ProductModel.get_products(filters)
         
@@ -417,7 +418,7 @@ def get_products(request):
         })
     
     except Exception as e:
-        return JsonResponse({'error': 'Server error'}, status=500)
+        return JsonResponse({'error': e}, status=500)
 
 @csrf_exempt
 def get_product(request, product_id):
