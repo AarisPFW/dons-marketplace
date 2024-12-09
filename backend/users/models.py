@@ -381,7 +381,7 @@ class ProductModel:
             product = ProductModel.collection.find_one({"_id": ObjectId(product_id)})
             if product:
                 product['_id'] = str(product['_id'])
-                product['date_posted'] = product['date_posted'].isoformat()
+                # product['date_posted'] = product['date_posted'].isoformat()
             return product
         except Exception:
             return None

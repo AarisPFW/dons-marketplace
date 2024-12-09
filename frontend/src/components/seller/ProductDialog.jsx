@@ -20,14 +20,15 @@ import { Upload, X } from 'lucide-react';
 const ProductDialog = ({ open, onClose, onSubmit, product }) => {
   const [formError, setFormError] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   const initialFormData = {
     title: '',
     price: '',
     category: '',
     description: '',
-    image: '/api/placeholder/400/200',
-    status: 'Listed'
+    image: null,
+    status: 'listed'
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -41,6 +42,18 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
       setImagePreview(null);
     }
   }, [product, open]);
+
+  // Validate form data whenever it changes
+  useEffect(() => {
+    const isValid = 
+      formData.title.trim() !== '' &&
+      formData.price > 0 &&
+      formData.category !== '' &&
+      formData.description.trim() !== '' &&
+      (imagePreview !== null || (product && formData.image === product.image));
+
+    setIsFormValid(isValid);
+  }, [formData, imagePreview, product]);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -63,25 +76,8 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
     e.preventDefault();
     setFormError('');
 
-    // Validation
-    if (!formData.title.trim()) {
-      setFormError('Title is required');
-      return;
-    }
-    if (!formData.price || formData.price <= 0) {
-      setFormError('Valid price is required');
-      return;
-    }
-    if (!formData.category) {
-      setFormError('Category is required');
-      return;
-    }
-    if (!formData.description.trim()) {
-      setFormError('Description is required');
-      return;
-    }
-    if (!formData.image && !product) {
-      setFormError('Image is required');
+    if (!isFormValid) {
+      setFormError('Please fill in all required fields');
       return;
     }
 
@@ -89,6 +85,11 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
       ...formData,
       price: Number(formData.price)
     });
+  };
+
+  const clearImage = () => {
+    setImagePreview(null);
+    setFormData(prev => ({ ...prev, image: null }));
   };
 
   return (
@@ -130,10 +131,7 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
                       }} 
                     />
                     <IconButton
-                      onClick={() => {
-                        setImagePreview(null);
-                        setFormData(prev => ({ ...prev, image: '' }));
-                      }}
+                      onClick={clearImage}
                       sx={{
                         position: 'absolute',
                         top: 8,
@@ -180,18 +178,17 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 required
-                inputProps={{ min: 0, step: 0.01 }} // Enforce minimum price of 0 and allow decimal values
+                inputProps={{ min: 0, step: 0.01 }}
               />
             </Grid>
             
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth required>
                 <InputLabel>Category</InputLabel>
                 <Select
                   value={formData.category}
                   label="Category"
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  required
                 >
                   <MenuItem value="Home">Home</MenuItem>
                   <MenuItem value="Electronics">Electronics</MenuItem>
@@ -213,26 +210,32 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
-            {product ? (
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={formData.status}
-                  label="Status"
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                >
-                  <MenuItem value="Listed">Listed</MenuItem>
-                  <MenuItem value="Sold">Sold</MenuItem>
-                </Select>
+
+            {product && (
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={formData.status}
+                    label="Status"
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  >
+                    <MenuItem value="listed">Listed</MenuItem>
+                    <MenuItem value="sold">Sold</MenuItem>
+                    </Select>
               </FormControl>
-            ) : null}
-          </Grid>
+            </Grid>
+          )}
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained" color="primary">
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary"
+            disabled={!isFormValid}
+          >
             {product ? 'Update' : 'List'} Product
           </Button>
         </DialogActions>

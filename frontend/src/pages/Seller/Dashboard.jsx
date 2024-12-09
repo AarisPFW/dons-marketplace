@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import axiosInstance from '../../api/axios';
 
 const SellerDashboard = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
@@ -35,7 +35,7 @@ const SellerDashboard = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get(`/users/products/?seller_email=${user.email}/`);
+      const response = await axiosInstance.get(`/users/products/?seller_email=${user.email}`);
       setProducts(response.data.products || []);
     } catch (error) {
       showAlert('Failed to fetch products', 'error');
@@ -72,50 +72,47 @@ const SellerDashboard = () => {
   };
 
   const handleDeleteConfirm = async () => {
+    setLoading(true);
     try {
-      await axiosInstance.delete(`/users/products/${deleteDialog.product._id}`);
-      // Update local state instead of fetching
-      setProducts(currentProducts => 
-        currentProducts.filter(p => p._id !== deleteDialog.product._id)
-      );
+      await axiosInstance.delete(`/users/products/${deleteDialog.product._id}/delete/`);
+      await fetchProducts();
       showAlert('Product deleted successfully');
     } catch (error) {
       showAlert('Failed to delete product', 'error');
     } finally {
       setDeleteDialog({ open: false, product: null });
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (formData) => {
+    setLoading(true);
     try {
       if (selectedProduct) {
-        // Update product
-        const response = await axiosInstance.put(`/users/products/${selectedProduct._id}/update/`, {
-          ...formData,
+        // Update product - only send required fields
+        const updateData = {
+          title: formData.title,
+          price: formData.price,
+          category: formData.category,
+          description: formData.description,
+          image: formData.image,
+          status: formData.status,
           seller_email: user.email
-        });
-        // Update local state
-        setProducts(currentProducts => 
-          currentProducts.map(p => 
-            p._id === selectedProduct._id ? response.data.product : p
-          )
-        );
+        };
+
+        await axiosInstance.put(`/users/products/${selectedProduct._id}/update/`, updateData);
         showAlert('Product updated successfully');
       } else {
         // Add new product
-        const response = await axiosInstance.post('/users/products/create/', {
+        await axiosInstance.post('/users/products/create/', {
           ...formData,
           seller_email: user.email,
           seller_phone_number: 122345678
         });
-        // Update local state
-        setProducts(currentProducts => 
-          currentProducts.map(p => 
-            p._id === selectedProduct._id ? response.data.product : p
-          )
-        );
         showAlert('Product created successfully');
       }
+      
+      await fetchProducts();
       setOpenDialog(false);
       setSelectedProduct(null);
     } catch (error) {
@@ -123,6 +120,8 @@ const SellerDashboard = () => {
         error.response?.data?.message || 'Failed to save product', 
         'error'
       );
+    } finally {
+      setLoading(false);
     }
   };
 

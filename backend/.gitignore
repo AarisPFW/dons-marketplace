@@ -1,2 +1,7 @@
 venv
 .vscode/*
+__pycache__/
+*/__pycache__/
+*.pyc
+backend/backend/__pycache__
+backend/users/__pycache__/
