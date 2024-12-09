@@ -8,7 +8,8 @@ import {
   Box,
   Grid,
   Divider,
-  Link
+  Link,
+  Chip
 } from '@mui/material';
 import { X, Mail, Phone } from 'lucide-react';
 
@@ -50,24 +51,46 @@ const ProductDetailModal = ({ open, onClose, product }) => {
                 bgcolor: 'grey.100'
               }}
             >
-              <img
-                src={product.image}
-                alt={product.title}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain'
-                }}
-              />
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'text.secondary'
+                  }}
+                >
+                  No Image Available
+                </Box>
+              )}
             </Box>
           </Grid>
 
           {/* Details Section */}
           <Grid item xs={12} md={6}>
             <Box sx={{ p: 3 }}>
-              <Typography variant="h5" gutterBottom fontWeight="bold">
-                {product.title}
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" fontWeight="bold">
+                  {product.title}
+                </Typography>
+                <Chip 
+                  label={product.status} 
+                  color={product.status === 'Listed' ? 'info' : 'success'}
+                  size="small"
+                />
+              </Box>
 
               <Typography variant="h4" color="primary" gutterBottom>
                 ${product.price.toFixed(2)}
@@ -84,7 +107,7 @@ const ProductDetailModal = ({ open, onClose, product }) => {
               </Typography>
 
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Posted: {new Date(product.datePosted).toLocaleDateString()}
+                Posted: {new Date(product.date_posted).toLocaleString()}
               </Typography>
 
               <Divider sx={{ my: 2 }} />
@@ -96,7 +119,7 @@ const ProductDetailModal = ({ open, onClose, product }) => {
               
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Link
-                  href={`mailto:${product.seller?.email || "seller@example.com"}`}
+                  href={`mailto:${product.seller_email}`}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -109,7 +132,7 @@ const ProductDetailModal = ({ open, onClose, product }) => {
                   }}
                 >
                   <Mail size={20} style={{ marginRight: 8 }} />
-                  {product.seller?.email || "seller@example.com"}
+                  {product.seller_email}
                 </Link>
 
                 <Link
@@ -126,7 +149,7 @@ const ProductDetailModal = ({ open, onClose, product }) => {
                   }}
                 >
                   <Phone size={20} style={{ marginRight: 8 }} />
-                  {product.seller?.phone || "(123) 456-7890"}
+                  {product.seller_phone_number}
                 </Link>
               </Box>
             </Box>

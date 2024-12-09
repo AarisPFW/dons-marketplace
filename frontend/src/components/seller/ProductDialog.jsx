@@ -11,36 +11,85 @@ import {
   Select,
   MenuItem,
   Box,
-  Grid
+  Grid,
+  IconButton,
+  Alert
 } from '@mui/material';
+import { Upload, X } from 'lucide-react';
 
 const ProductDialog = ({ open, onClose, onSubmit, product }) => {
-    const initialFormData = {
-      title: '',
-      price: '',
-      category: '',
-      description: '',
-      image: '/api/placeholder/400/200', // default image
-      status: 'Listed'
-    };
-  
-    const [formData, setFormData] = useState(initialFormData);
-  
-    useEffect(() => {
-      if (product) {
-        setFormData(product);
-      } else {
-        setFormData(initialFormData); // Reset form when adding new product
+  const [formError, setFormError] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const initialFormData = {
+    title: '',
+    price: '',
+    category: '',
+    description: '',
+    image: '/api/placeholder/400/200',
+    status: 'Listed'
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  useEffect(() => {
+    if (product) {
+      setFormData(product);
+      setImagePreview(product.image);
+    } else {
+      setFormData(initialFormData);
+      setImagePreview(null);
+    }
+  }, [product, open]);
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 30 * 1024 * 1024) { // 30MB check
+        setFormError('Image size should be less than 30MB');
+        return;
       }
-    }, [product, open]); // Add open to dependencies
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      onSubmit({
-        ...formData,
-        price: Number(formData.price) // Ensure price is a number
-      });
-    };
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setFormData(prev => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFormError('');
+
+    // Validation
+    if (!formData.title.trim()) {
+      setFormError('Title is required');
+      return;
+    }
+    if (!formData.price || formData.price <= 0) {
+      setFormError('Valid price is required');
+      return;
+    }
+    if (!formData.category) {
+      setFormError('Category is required');
+      return;
+    }
+    if (!formData.description.trim()) {
+      setFormError('Description is required');
+      return;
+    }
+    if (!formData.image && !product) {
+      setFormError('Image is required');
+      return;
+    }
+
+    onSubmit({
+      ...formData,
+      price: Number(formData.price)
+    });
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -49,7 +98,70 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
+          {formError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {formError}
+            </Alert>
+          )}
+
           <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Box sx={{ 
+                width: '100%', 
+                height: 200, 
+                border: '2px dashed #ccc',
+                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                mb: 2,
+                overflow: 'hidden'
+              }}>
+                {imagePreview ? (
+                  <>
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%', 
+                        objectFit: 'contain' 
+                      }} 
+                    />
+                    <IconButton
+                      onClick={() => {
+                        setImagePreview(null);
+                        setFormData(prev => ({ ...prev, image: '' }));
+                      }}
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        bgcolor: 'rgba(0,0,0,0.5)',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                      }}
+                    >
+                      <X color="white" size={20} />
+                    </IconButton>
+                  </>
+                ) : (
+                  <Button
+                    component="label"
+                    startIcon={<Upload />}
+                  >
+                    Upload Image
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                  </Button>
+                )}
+              </Box>
+            </Grid>
+
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -59,6 +171,7 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
                 required
               />
             </Grid>
+            
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -67,8 +180,10 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 required
+                inputProps={{ min: 0, step: 0.01 }} // Enforce minimum price of 0 and allow decimal values
               />
             </Grid>
+            
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
@@ -86,6 +201,7 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
                 </Select>
               </FormControl>
             </Grid>
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -98,29 +214,20 @@ const ProductDialog = ({ open, onClose, onSubmit, product }) => {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Image URL"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                required
-              />
-            </Grid>
-            {product && (
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label="Status"
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    <MenuItem value="Listed">Listed</MenuItem>
-                    <MenuItem value="Sold">Sold</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            )}
+            {product ? (
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={formData.status}
+                  label="Status"
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <MenuItem value="Listed">Listed</MenuItem>
+                  <MenuItem value="Sold">Sold</MenuItem>
+                </Select>
+              </FormControl>
+            ) : null}
+          </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>

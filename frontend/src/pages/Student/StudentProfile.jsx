@@ -1,76 +1,60 @@
-// src/pages/Student/Profile.jsx
-import React from 'react';
-import { 
-  Box, 
-  Container, 
-  Paper, 
-  Typography, 
-  Avatar,
-  Divider
-} from '@mui/material';
-import Navbar from '../../components/common/Navbar';
-import { UserCircle } from 'lucide-react';
+// src/pages/Student/StudentProfile.jsx
+import React, { useEffect, useState } from 'react';
+import { Typography } from '@mui/material';
+import ProfileLayout from '../../components/common/ProfileLayout';
+import axiosInstance from '../../api/axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const StudentProfile = () => {
-  // This would come from your auth context/state management in a real app
-  const userDetails = {
-    name: "John Doe",
-    email: "john.doe@pfw.edu"
-  };
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axiosInstance.get('/users/profile/');
+        setProfileData(response.data);
+      } catch (err) {
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchProfile();
+  }, []);
 
   return (
-    <Box>
-      <Navbar userType="student" />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
-          <Avatar 
-            sx={{ 
-              width: 100, 
-              height: 100, 
-              mb: 2,
-              bgcolor: 'secondary.main'
-            }}
-          >
-            <UserCircle size={50} />
-          </Avatar>
-
-          <Typography variant="h4" gutterBottom>
-            Student Profile
+    <ProfileLayout 
+      userType="student" 
+      isLoading={loading}
+      error={error}
+    >
+      {profileData && (
+        <>
+          <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+            Name
           </Typography>
-          
-          <Divider sx={{ width: '100%', my: 3 }} />
+          <Typography variant="h6" gutterBottom>
+            {profileData.username}
+          </Typography>
 
-          <Box sx={{ width: '100%', maxWidth: 400 }}>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              Name
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {userDetails.name}
-            </Typography>
-
-            <Typography 
-              variant="subtitle1" 
-              color="text.secondary" 
-              gutterBottom 
-              sx={{ mt: 2 }}
-            >
-              Email
-            </Typography>
-            <Typography variant="h6">
-              {userDetails.email}
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
+          <Typography 
+            variant="subtitle1" 
+            color="text.secondary" 
+            gutterBottom 
+            sx={{ mt: 2 }}
+          >
+            Email
+          </Typography>
+          <Typography variant="h6">
+            {profileData.email}
+          </Typography>
+        </>
+      )}
+    </ProfileLayout>
   );
 };
 

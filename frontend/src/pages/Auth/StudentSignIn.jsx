@@ -1,4 +1,4 @@
-// src/pages/Auth/SellerSignIn.jsx
+// src/pages/Auth/StudentSignIn.jsx
 import React, { useState } from 'react';
 import { 
   Typography, 
@@ -14,7 +14,7 @@ import AuthCard from '../../components/common/AuthCard';
 import { authAPI } from '../../api/auth';
 import { useAuth } from '../../contexts/AuthContext';
 
-const SellerSignIn = () => {
+const StudentSignIn = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -25,64 +25,64 @@ const SellerSignIn = () => {
   });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const response = await authAPI.login({
-        email: formData.email,
-        password: formData.password,
-        role: 'seller'
-      });
+  try {
+    const response = await authAPI.login({
+      email: formData.email,
+      password: formData.password,
+      role: 'student'
+    });
 
-      // Success case
-      localStorage.setItem('accessToken', response.data.access_token);
-      localStorage.setItem('refreshToken', response.data.refresh_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      setUser(response.data.user);
+    // Success case
+    localStorage.setItem('accessToken', response.data.access_token);
+    localStorage.setItem('refreshToken', response.data.refresh_token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+    setUser(response.data.user);
 
-      setAlert({
-        show: true,
-        message: 'Login successful!',
-        severity: 'success'
-      });
+    setAlert({
+      show: true,
+      message: 'Login successful!',
+      severity: 'success'
+    });
 
-      setTimeout(() => {
-        navigate('/seller/dashboard');
-      }, 1000);
+    setTimeout(() => {
+      navigate('/student/dashboard');
+    }, 1000);
 
-    } catch (error) {
-      // Handle different error cases
-      let errorMessage = 'Invalid credentials';
-      
-      if (error.response?.status === 401) {
-        errorMessage = 'Invalid email or password';
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (!error.response) {
-        errorMessage = 'Network error. Please try again.';
-      }
-
-      setAlert({
-        show: true,
-        message: errorMessage,
-        severity: 'error'
-      });
-
-      // Clear password on error
-      setFormData(prev => ({
-        ...prev,
-        password: ''
-      }));
+  } catch (error) {
+    // Handle different error cases
+    let errorMessage = 'Invalid credentials';
+    
+    if (error.response?.status === 401) {
+      errorMessage = 'Invalid email or password';
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (!error.response) {
+      errorMessage = 'Network error. Please try again.';
     }
 
-    setLoading(false);
-  };
+    setAlert({
+      show: true,
+      message: errorMessage,
+      severity: 'error'
+    });
+
+    // Clear password on error
+    setFormData(prev => ({
+      ...prev,
+      password: ''
+    }));
+  }
+
+  setLoading(false);
+};
 
   return (
     <AuthCard>
       <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-        Seller Sign In
+        Student Sign In
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         Welcome back! Please login to your account
@@ -92,7 +92,7 @@ const SellerSignIn = () => {
         <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
-            label="Email"
+            label="PFW Email"
             variant="outlined"
             type="email"
             value={formData.email}
@@ -128,7 +128,7 @@ const SellerSignIn = () => {
         <Typography variant="body2" color="text.secondary">
           Don't have an account?{' '}
           <Link 
-            href="/seller/signup" 
+            href="/student/signup" 
             color="secondary"
             sx={{ textDecoration: 'none', fontWeight: 'medium' }}
           >
@@ -153,4 +153,4 @@ const SellerSignIn = () => {
   );
 };
 
-export default SellerSignIn;
+export default StudentSignIn;

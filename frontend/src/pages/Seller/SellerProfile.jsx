@@ -1,90 +1,77 @@
-// src/pages/Seller/Profile.jsx
-import React from 'react';
-import { 
-  Box, 
-  Container, 
-  Paper, 
-  Typography, 
-  Avatar,
-  Divider
-} from '@mui/material';
-import Navbar from '../../components/common/Navbar';
-import { UserCircle } from 'lucide-react';
+// src/pages/Seller/SellerProfile.jsx
+import React, { useEffect, useState } from 'react';
+import { Typography } from '@mui/material';
+import ProfileLayout from '../../components/common/ProfileLayout';
+import axiosInstance from '../../api/axios';
+import { useAuth } from '../../contexts/AuthContext';
 
-// src/pages/Seller/Profile.jsx
 const SellerProfile = () => {
-  // This would come from your auth context/state management in a real app
-  const userDetails = {
-    name: "Jane Doe",
-    email: "jane.doe@example.com",
-    phone: "(123) 456-7890"
-  };
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await axiosInstance.get('/users/profile/', {}, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setProfileData(response.data);
+      } catch (err) {
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchProfile();
+  }, []);
 
   return (
-    <Box>
-      <Navbar userType="seller" />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
-          <Avatar 
-            sx={{ 
-              width: 100, 
-              height: 100, 
-              mb: 2,
-              bgcolor: 'secondary.main'
-            }}
-          >
-            <UserCircle size={50} />
-          </Avatar>
-
-          <Typography variant="h4" gutterBottom>
-            Seller Profile
+    <ProfileLayout 
+      userType="seller" 
+      isLoading={loading}
+      error={error}
+    >
+      {profileData && (
+        <>
+          <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+            Name
           </Typography>
-          
-          <Divider sx={{ width: '100%', my: 3 }} />
+          <Typography variant="h6" gutterBottom>
+            {profileData.username}
+          </Typography>
 
-          <Box sx={{ width: '100%', maxWidth: 400 }}>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              Name
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {userDetails.name}
-            </Typography>
+          <Typography 
+            variant="subtitle1" 
+            color="text.secondary" 
+            gutterBottom 
+            sx={{ mt: 2 }}
+          >
+            Email
+          </Typography>
+          <Typography variant="h6" gutterBottom>
+            {profileData.email}
+          </Typography>
 
-            <Typography 
-              variant="subtitle1" 
-              color="text.secondary" 
-              gutterBottom 
-              sx={{ mt: 2 }}
-            >
-              Email
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {userDetails.email}
-            </Typography>
-
-            <Typography 
-              variant="subtitle1" 
-              color="text.secondary" 
-              gutterBottom 
-              sx={{ mt: 2 }}
-            >
-              Phone Number
-            </Typography>
-            <Typography variant="h6">
-              {userDetails.phone}
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
+          <Typography 
+            variant="subtitle1" 
+            color="text.secondary" 
+            gutterBottom 
+            sx={{ mt: 2 }}
+          >
+            Phone Number
+          </Typography>
+          <Typography variant="h6">
+            {profileData.phone_number}
+          </Typography>
+        </>
+      )}
+    </ProfileLayout>
   );
 };
 

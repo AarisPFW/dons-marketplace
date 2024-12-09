@@ -10,30 +10,37 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import { User, UserCircle, LogOut } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-const Navbar = ({userType = 'student'}) => {
+const Navbar = ({ userType }) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
 
-  const handleClick = (event) => {
+  const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
   const handleProfile = () => {
-    handleClose();
+    handleMenuClose();
     navigate(`/${userType}/profile`);
   };
 
-  const handleLogout = () => {
-    handleClose();
-    navigate('/');
+  const handleLogout = async () => {
+    handleMenuClose();
+    try {
+      await logout();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -44,22 +51,22 @@ const Navbar = ({userType = 'student'}) => {
         </Typography>
         <IconButton 
           color="inherit"
-          onClick={handleClick}
+          onClick={handleMenuClick}
         >
           <User />
         </IconButton>
         <Menu
           anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
           PaperProps={{
             elevation: 3,
-            sx: { minWidth: '200px', mt: 1 }
+            sx: { minWidth: '200px' }
           }}
         >
           <MenuItem onClick={handleProfile}>
             <ListItemIcon>
-              <UserCircle size={20} />
+              <User size={20} />
             </ListItemIcon>
             <ListItemText>View Profile</ListItemText>
           </MenuItem>

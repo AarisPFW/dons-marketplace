@@ -3,10 +3,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from './theme';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Pages
 import LandingPage from './pages/Landing/LandingPage';
-import StudentSignIn from './pages/Auth/StuentSignIn';
+import StudentSignIn from './pages/Auth/StudentSignIn';
 import StudentSignUp from './pages/Auth/StudentSignUp';
 import SellerSignIn from './pages/Auth/SellerSignIn';
 import SellerSignUp from './pages/Auth/SellerSignUp';
@@ -19,34 +21,52 @@ import SellerProfile from './pages/Seller/SellerProfile';
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          
-          {/* Student Routes */}
-          <Route path="/student">
-            <Route path="signin" element={<StudentSignIn />} />
-            <Route path="signup" element={<StudentSignUp />} />
-            <Route path="dashboard" element={<StudentDashboard />} />
-            <Route path="profile" element={<StudentProfile />} />
-          </Route>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            
+            {/* Student Routes */}
+            <Route path="/student">
+              <Route path="signin" element={<StudentSignIn />} />
+              <Route path="signup" element={<StudentSignUp />} />
+              <Route path="dashboard" element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="profile" element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentProfile />
+                </ProtectedRoute>
+              } />
+            </Route>
 
-          {/* Seller Routes */}
-          <Route path="/seller">
-            <Route path="signin" element={<SellerSignIn />} />
-            <Route path="signup" element={<SellerSignUp />} />
-            <Route path="dashboard" element={<SellerDashboard />} />
-            <Route path="profile" element={<SellerProfile />} />
-          </Route>
+            {/* Seller Routes */}
+            <Route path="/seller">
+              <Route path="signin" element={<SellerSignIn />} />
+              <Route path="signup" element={<SellerSignUp />} />
+              <Route path="dashboard" element={
+                <ProtectedRoute roles={['seller']}>
+                  <SellerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="profile" element={
+                <ProtectedRoute roles={['seller']}>
+                  <SellerProfile />
+                </ProtectedRoute>
+              } />
+            </Route>
 
-          {/* Common Routes */}
-          <Route path="/verify-otp" element={<OTPVerification />} />
+            {/* Common Routes */}
+            <Route path="/verify-otp" element={<OTPVerification />} />
 
-          {/* Catch all undefined routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Catch all undefined routes */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

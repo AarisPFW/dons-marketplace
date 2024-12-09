@@ -4,40 +4,85 @@ import {
   Typography, 
   TextField, 
   Button, 
-  Link,
+  Link, 
   Box,
-  Alert 
+  Alert,
+  Snackbar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AuthCard from '../../components/common/AuthCard';
+import axiosInstance from '../../api/axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const StudentSignUp = () => {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate PFW email
-    if (!formData.email.endsWith('@pfw.edu')) {
-      setError('Please use your PFW email address (@pfw.edu)');
-      return;
-    }
+    setLoading(true);
 
-    // Validate password match
+    // Basic validation
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setAlert({
+        show: true,
+        message: "Passwords don't match",
+        severity: 'error'
+      });
+      setLoading(false);
       return;
     }
 
-    // Proceed to OTP verification
-    navigate('/verify-otp', { state: { userType: 'student', email: formData.email } });
+    if (!formData.email.endsWith('@pfw.edu')) {
+      setAlert({
+        show: true,
+        message: 'Please use your PFW email address',
+        severity: 'error'
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post('/users/auth/signup/', {
+        email: formData.email,
+        password: formData.password,
+        username: formData.username,
+        role: 'student'
+      });
+
+      setAlert({
+        show: true,
+        message: 'Registration successful! Please check your email for OTP.',
+        severity: 'success'
+      });
+
+      // Navigate to OTP verification with necessary data
+      navigate('/verify-otp', { 
+        state: { 
+          email: formData.email,
+          role: 'student',
+          password: formData.password,
+          username: formData.username
+        } 
+      });
+    } catch (error) {
+      setAlert({
+        show: true,
+        message: error.response?.data?.message || 'Registration failed',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,24 +90,15 @@ const StudentSignUp = () => {
       <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
         Student Sign Up
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Create your account using your PFW email
-      </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
 
       <form onSubmit={handleSubmit}>
         <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
-            label="Full Name"
+            label="Username"
             variant="outlined"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             sx={{ mb: 2 }}
             required
           />
@@ -104,13 +140,10 @@ const StudentSignUp = () => {
           color="secondary"
           size="large"
           fullWidth
-          sx={{ 
-            mb: 2,
-            borderRadius: '8px',
-            py: 1.5
-          }}
+          sx={{ mb: 2 }}
+          disabled={loading}
         >
-          Sign Up
+          {loading ? 'Signing Up...' : 'Sign Up'}
         </Button>
 
         <Typography variant="body2" color="text.secondary">
@@ -124,6 +157,19 @@ const StudentSignUp = () => {
           </Link>
         </Typography>
       </form>
+
+      <Snackbar 
+        open={alert.show} 
+        autoHideDuration={6000} 
+        onClose={() => setAlert({ ...alert, show: false })}
+      >
+        <Alert 
+          severity={alert.severity} 
+          onClose={() => setAlert({ ...alert, show: false })}
+        >
+          {alert.message}
+        </Alert>
+      </Snackbar>
     </AuthCard>
   );
 };

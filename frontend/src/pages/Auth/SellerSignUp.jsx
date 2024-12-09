@@ -6,22 +6,27 @@ import {
   Button, 
   Link,
   Box,
-  Alert 
+  Alert,
+  Snackbar 
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AuthCard from '../../components/common/AuthCard';
 import PhoneInput from '../../components/common/PhoneInput';
+import axiosInstance from '../../api/axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SellerSignUp = () => {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
 
   // US Phone number validation function
   const isValidUSPhone = (phone) => {
@@ -29,30 +34,66 @@ const SellerSignUp = () => {
     return phoneRegex.test(phone);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setLoading(true);
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setAlert({
+        show: true,
+        message: "Passwords don't match",
+        severity: 'error'
+      });
+      setLoading(false);
       return;
     }
 
     // Validate phone number
     if (!isValidUSPhone(formData.phone)) {
-      setError('Please enter a valid US phone number');
+      setAlert({
+        show: true,
+        message: 'Please enter a valid US phone number',
+        severity: 'error'
+      });
+      setLoading(false);
       return;
     }
 
-    // Proceed to OTP verification
-    navigate('/verify-otp', { 
-      state: { 
-        userType: 'seller', 
+    try {
+      const response = await axiosInstance.post('/users/auth/signup/', {
         email: formData.email,
-        phone: formData.phone 
-      } 
-    });
+        password: formData.password,
+        username: formData.username,
+        phone_number: formData.phone,
+        role: 'seller'
+      });
+
+      setAlert({
+        show: true,
+        message: 'Registration successful! Please check your email for OTP.',
+        severity: 'success'
+      });
+
+      // Navigate to OTP verification with necessary data
+      navigate('/verify-otp', { 
+        state: { 
+          email: formData.email,
+          role: 'seller',
+          password: formData.password,
+          username: formData.username,
+          phone: formData.phone
+        } 
+      });
+    } catch (error) {
+      setAlert({
+        show: true,
+        message: error.response?.data?.message || 'Registration failed',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,24 +101,15 @@ const SellerSignUp = () => {
       <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
         Seller Sign Up
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Create your seller account
-      </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
 
       <form onSubmit={handleSubmit}>
         <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
-            label="Full Name"
+            label="Username"
             variant="outlined"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             sx={{ mb: 2 }}
             required
           />
@@ -128,13 +160,10 @@ const SellerSignUp = () => {
           color="secondary"
           size="large"
           fullWidth
-          sx={{ 
-            mb: 2,
-            borderRadius: '8px',
-            py: 1.5
-          }}
+          sx={{ mb: 2 }}
+          disabled={loading}
         >
-          Sign Up
+          {loading ? 'Signing Up...' : 'Sign Up'}
         </Button>
 
         <Typography variant="body2" color="text.secondary">
@@ -148,6 +177,19 @@ const SellerSignUp = () => {
           </Link>
         </Typography>
       </form>
+
+      <Snackbar 
+        open={alert.show} 
+        autoHideDuration={6000} 
+        onClose={() => setAlert({ ...alert, show: false })}
+      >
+        <Alert 
+          severity={alert.severity} 
+          onClose={() => setAlert({ ...alert, show: false })}
+        >
+          {alert.message}
+        </Alert>
+      </Snackbar>
     </AuthCard>
   );
 };
