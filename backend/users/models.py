@@ -365,7 +365,7 @@ class ProductModel:
         # Convert ObjectId to string for JSON serialization
         for product in products:
             product['_id'] = str(product['_id'])
-            product['date_posted'] = product['date_posted'].isoformat()
+            # product['date_posted'] = product['date_posted'].isoformat()
         
         return products
     
