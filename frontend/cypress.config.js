@@ -8,6 +8,7 @@ export default defineConfig({
     requestTimeout: 5000,
     responseTimeout: 5000,
     pageLoadTimeout: 10000,
+    chromeWebSecurity: false,
     setupNodeEvents(on, config) {
       // implement node event listeners here
     },

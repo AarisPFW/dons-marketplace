@@ -34,7 +34,7 @@ const ProductCard = ({ product, onClick }) => {
           ${product.price.toFixed(2)}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {product.category} • Posted on {new Date(product.datePosted).toLocaleDateString()}
+          Category - {product.category}
         </Typography>
       </CardContent>
     </Card>

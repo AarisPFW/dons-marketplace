@@ -98,7 +98,7 @@ const ProductDetailModal = ({ open, onClose, product }) => {
               </Typography>
 
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Posted: {new Date(product.date_posted).toLocaleString()}
+              Posted: {new Date(product.date_posted).toLocaleDateString()}
               </Typography>
 
               <Divider sx={{ my: 2 }} />
